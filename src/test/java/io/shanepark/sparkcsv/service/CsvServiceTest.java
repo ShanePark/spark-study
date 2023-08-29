@@ -1,23 +1,18 @@
 package io.shanepark.sparkcsv.service;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CsvServiceTest {
 
-    CsvService csvService = new CsvService();
+    static final String TEST_CSV_PATH = "/home/shane/Downloads/test_1000.csv";
 
-    // now it doesn't work over 10000 rows yet
-    final String TEST_CSV_PATH = "/home/shane/Downloads/test_1000.csv";
-
-    @Test
-    void csvIntoParquet() {
+    public static void main(String[] args) {
+        CsvService csvService = new CsvService();
         File csvFile = new File(TEST_CSV_PATH);
-        File parquetFile = csvService.csvIntoParquet(csvFile);
-        assertThat(parquetFile).exists();
+
+        String result = csvService.csvIntoParquet(csvFile);
+
+        System.err.printf(result);
     }
 
 }

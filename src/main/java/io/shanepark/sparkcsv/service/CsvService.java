@@ -3,58 +3,70 @@ package io.shanepark.sparkcsv.service;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Service;
+import org.apache.spark.sql.types.StructField;
 
-import javax.annotation.PreDestroy;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-@Service
 public class CsvService {
 
-    private SparkSession spark;
+    public String csvIntoParquet(File csvFile) {
+        Dataset<Row> dataset = dataset(csvFile);
 
-    public CsvService() {
-        spark = getSparkSession();
-    }
+        String[] columns = dataset.columns();
+        StringBuilder sb = new StringBuilder();
 
-    @PreDestroy
-    public void close() {
-        spark.close();
-    }
-
-    public File csvIntoParquet(File csvFile) {
-        Dataset<Row> dataset = spark.read()
-                .format("csv")
-                .option("header", "true")
-                .option("multiline", "true")
-                .option("inferSchema", "true")
-                .load(csvFile.getAbsolutePath());
-
-        for (String colName : dataset.columns()) {
-            String newColName = renameColumnName(colName);
-            dataset = dataset.withColumnRenamed(colName, newColName);
+        for (String column : columns) {
+            Dataset<Row> distinct = dataset.select(column).distinct();
+            long distinctCount = distinct.count();
+            sb.append("column = " + column + ", distinctCount = " + distinctCount + "\n");
         }
 
-        String parquetFileName = csvFile.getAbsolutePath().replace(".csv", ".parquet");
+        return sb.toString();
+    }
 
-        dataset.write()
-                .mode("overwrite")
-                .parquet(parquetFileName);
+    private Dataset<Row> dataset(File csvFile) {
+        SparkSession spark = getSparkSession();
 
-        return new File(parquetFileName);
+        // 1. read csv file
+        Dataset<Row> dataset = spark.read()
+                .format("csv")
+                .option("header", true)
+                .option("multiline", true)
+                .option("inferSchema", true)
+                .load(csvFile.getAbsolutePath());
+
+        // 2. rename columns
+        StructField[] fields = dataset.schema().fields();
+        String[] alias = new String[fields.length];
+        Map<String, Integer> fieldCnt = new HashMap<>();
+        for (int i = 0; i < fields.length; i++) {
+            String original = fields[i].name();
+            String renamed = renameColumnName(original);
+            Integer cnt = fieldCnt.merge(renamed, 1, Integer::sum);
+            if (cnt > 1) {
+                renamed = renamed + "_" + cnt;
+            }
+            alias[i] = renamed;
+        }
+
+
+        Dataset<Row> df = dataset.toDF(alias);
+        return df;
     }
 
     private static SparkSession getSparkSession() {
         SparkSession spark = SparkSession.builder()
+                .master("local[2]")
                 .config("spark.executor.memory", "2G")
                 .appName("CsvIntoParquet")
-                .master("local[*]")
                 .getOrCreate();
         return spark;
     }
 
-    private static String renameColumnName(String columnName) {
+    public static String renameColumnName(String columnName) {
         StringBuilder sb = new StringBuilder();
         boolean lastWasUnderscore = false;
 
