@@ -8,6 +8,8 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -119,7 +121,40 @@ public class CsvService {
         }
 
         // 날짜인 경우 24 구간으로 나눈다.
-        return null;
+        LocalDate max = LocalDate.parse(dataset.select(functions.max(column)).first().get(0).toString());
+        LocalDate min = LocalDate.parse(dataset.select(functions.min(column)).first().get(0).toString());
+        long daysBetween = ChronoUnit.DAYS.between(min, max);
+
+        long interval = daysBetween / 24;
+
+        // Create an alias for the date group
+        String aliasName = "date_section";
+
+        // Group by the truncated date
+        Map<String, Long> resultMap = dataset
+                .withColumn(aliasName, functions.datediff(functions.lit(max), functions.col(column)).divide(interval).cast("int"))
+                .groupBy(aliasName)
+                .count()
+                .collectAsList()
+                .stream()
+                .collect(LinkedHashMap::new, (m, r) -> m.put(min.plusDays(r.getInt(0) * interval).toString(), r.getLong(1)), LinkedHashMap::putAll);
+
+        for (int i = 0; i < 24; i++) {
+            String key = min.plusDays(i * interval).toString();
+            resultMap.putIfAbsent(key, 0L);
+        }
+
+        resultMap = resultMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+
+        return resultMap;
     }
 
     private Map<String, Long> makeTop4Map(String column, Dataset<Row> dataset) {

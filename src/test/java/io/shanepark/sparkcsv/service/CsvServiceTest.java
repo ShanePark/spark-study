@@ -7,8 +7,11 @@ import java.util.List;
 
 class CsvServiceTest {
 
-    //    static final String TEST_CSV_PATH = "/home/shane/Downloads/test_1000.csv";
-    static final String TEST_CSV_PATH = "/home/shane/Downloads/grades.csv";
+    // Sections by date data
+    static final String TEST_CSV_PATH = "/home/shane/Downloads/test_1000.csv";
+
+    // sections by number data
+//    static final String TEST_CSV_PATH = "/home/shane/Downloads/grades.csv";
 
     public static void main(String[] args) {
         CsvService csvService = new CsvService();
