@@ -17,13 +17,17 @@ import java.util.stream.Collectors;
 @Service
 public class CsvService {
 
+    SparkSession spark;
+
+    public CsvService() {
+        spark = getSparkSession();
+    }
+
     public List<ColumnData> parseCsv(File csvFile) {
-        try (SparkSession spark = getSparkSession()) {
-            Dataset<Row> dataset = dataset(spark, csvFile);
-            return Arrays.stream(dataset.columns())
-                    .map(column -> makeColumnData(column, dataset))
-                    .collect(Collectors.toList());
-        }
+        Dataset<Row> dataset = dataset(spark, csvFile);
+        return Arrays.stream(dataset.columns())
+                .map(column -> makeColumnData(column, dataset))
+                .collect(Collectors.toList());
     }
 
     private Dataset<Row> dataset(SparkSession spark, File csvFile) {
@@ -48,7 +52,6 @@ public class CsvService {
             }
             alias[i] = renamed;
         }
-
 
         Dataset<Row> df = dataset.toDF(alias);
         return df;
@@ -178,7 +181,10 @@ public class CsvService {
                 .sort(functions.col(column).asc())
                 .collectAsList()
                 .stream()
-                .collect(HashMap::new, (m, r) -> m.put(r.get(0).toString(), r.getLong(1)), HashMap::putAll);
+                .collect(HashMap::new, (m, r) -> {
+                    Object o = r.get(0);
+                    m.put(o == null ? "" : o.toString(), r.getLong(1));
+                }, HashMap::putAll);
     }
 
     private SparkSession getSparkSession() {
@@ -194,7 +200,7 @@ public class CsvService {
         StringBuilder sb = new StringBuilder();
         boolean lastWasUnderscore = false;
 
-        if (Character.isDigit(columnName.charAt(0))) {
+        if (Character.isDigit(columnName.charAt(0)) || columnName.isEmpty()) {
             sb.append('_');
         }
 

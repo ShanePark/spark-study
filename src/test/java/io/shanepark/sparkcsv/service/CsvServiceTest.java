@@ -13,7 +13,7 @@ class CsvServiceTest {
     // sections by number data
 //    static final String TEST_CSV_PATH = "/home/shane/Downloads/grades.csv";
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         CsvService csvService = new CsvService();
         File csvFile = new File(TEST_CSV_PATH);
 
