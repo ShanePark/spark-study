@@ -6,6 +6,7 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -13,18 +14,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Service
 public class CsvService {
 
     public List<ColumnData> parseCsv(File csvFile) {
-        Dataset<Row> dataset = dataset(csvFile);
-        return Arrays.stream(dataset.columns())
-                .map(column -> makeColumnData(column, dataset))
-                .collect(Collectors.toList());
+        try (SparkSession spark = getSparkSession()) {
+            Dataset<Row> dataset = dataset(spark, csvFile);
+            return Arrays.stream(dataset.columns())
+                    .map(column -> makeColumnData(column, dataset))
+                    .collect(Collectors.toList());
+        }
     }
 
-    private Dataset<Row> dataset(File csvFile) {
-        SparkSession spark = getSparkSession();
-
+    private Dataset<Row> dataset(SparkSession spark, File csvFile) {
         // 1. read csv file
         Dataset<Row> dataset = spark.read()
                 .format("csv")

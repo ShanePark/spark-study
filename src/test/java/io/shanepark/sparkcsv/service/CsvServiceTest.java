@@ -13,11 +13,12 @@ class CsvServiceTest {
     // sections by number data
 //    static final String TEST_CSV_PATH = "/home/shane/Downloads/grades.csv";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         CsvService csvService = new CsvService();
         File csvFile = new File(TEST_CSV_PATH);
 
         List<ColumnData> list = csvService.parseCsv(csvFile);
+
         for (ColumnData columnData : list) {
             System.err.println(columnData);
         }

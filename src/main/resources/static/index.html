@@ -1,0 +1,319 @@
+<html>
+<head>
+  <title>CSV 업로드</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"
+          integrity="sha256-EVZCmhajjLhgTcxlGMGUBtQiYULZCPjt0uNTFEPFTRk=" crossorigin="anonymous"></script>
+  <style>
+      .graphs {
+          display: flex;
+          overflow-x: scroll;
+      }
+
+      .value-text {
+          margin-top: 2em;
+          font-size: 2em;
+          font-weight: bold;
+          text-align: center;
+      }
+  </style>
+</head>
+<body>
+<dlv>
+  <form>
+    <label for="csv"> CSV 파일 선택</label><br/>
+    <input id="csv" type="file" name="csv"/>
+    <button type="submit">업로드</button>
+  </form>
+</dlv>
+<div class="graphs">
+</div>
+
+</body>
+<script>
+    // $('form').on('submit', function () {
+    //     event.preventDefault();
+    //     var formData = new FormData();
+    //     formData.append('csv', $('#csv')[0].files[0]);
+    //     $.ajax({
+    //         url: '/api/csv',
+    //         type: 'POST',
+    //         data: formData,
+    //         contentType: false,
+    //         processData: false,
+    //         success: function (list) {
+    //             for (var i = 0; i < list.length; i++) {
+    //                 let data = list[i];
+    //                 let json = JSON.stringify(data);
+    //                 let graph = '<div id="graph' + i + '">' + json + '</div>';
+    //                 $('.graphs').append(graph);
+    //             }
+    //         }
+    //     })
+    // })
+    list = [];
+
+    list.push({
+        columnName: 'Index',
+        distinctCount: 1000,
+        graphType: 'ALL_UNIQUE',
+        dataType: 'NUMBER',
+        valueCountMap: null,
+    });
+
+    list.push({
+        distinctCount: 1000,
+        columnName: 'User_Id',
+        graphType: 'ALL_UNIQUE',
+        dataType: 'STRING',
+    });
+
+    list.push({
+        columnName: 'First_Name',
+        distinctCount: 526,
+        graphType: 'TOP4',
+        dataType: 'STRING',
+        valueCountMap: {
+            Jo: 6, Heidi: 6, Lydia: 6, Angel: 5
+        }
+    });
+
+    list.push({
+        columnName: 'Last_Name',
+        distinctCount: 628,
+        graphType: 'TOP4',
+        dataType: 'STRING',
+        valueCountMap: {
+            Duke: 6, Nixon: 5, Bruce: 5, Camacho: 5
+        }
+    });
+
+    list.push({
+        columnName: 'Sex',
+        distinctCount: 2,
+        graphType: 'PIE',
+        dataType: 'STRING',
+        valueCountMap: {
+            Female: 494,
+            Male: 506,
+        }
+    });
+
+    list.push({
+        columnName: 'Email',
+        distinctCount: 1000,
+        graphType: 'ALL_UNIQUE',
+        dataType: 'STRING',
+    });
+
+    list.push({
+        columnName: 'Phone',
+        distinctCount: 1000,
+        graphType: 'ALL_UNIQUE',
+        dataType: 'STRING',
+    });
+
+    list.push({
+        columnName: 'Date_of_birth',
+        distinctCount: 991,
+        graphType: 'COLUMN',
+        valueCountMap: {
+            '1906-06-30': 42,
+            '1911-04-26': 44,
+            '1916-02-20': 42,
+            '1920-12-16': 37,
+            '1925-10-12': 35,
+            '1930-08-08': 43,
+            '1935-06-04': 38,
+            '1940-03-30': 47,
+            '1945-01-24': 49,
+            '1949-11-20': 53,
+            '1954-09-16': 44,
+            '1959-07-13': 39,
+            '1964-05-08': 39,
+            '1969-03-04': 41,
+            '1973-12-29': 52,
+            '1978-10-25': 48,
+            '1983-08-21': 40,
+            '1988-06-16': 39,
+            '1993-04-12': 31,
+            '1998-02-06': 45,
+            '2002-12-03': 35,
+            '2007-09-29': 31,
+            '2012-07-25': 41,
+            '2017-05-21': 44,
+            '2022-03-17': 1
+        },
+        dataType: 'DATE',
+    });
+
+    list.push({
+        columnName: 'Job_Title',
+        distinctCount: 519,
+        graphType: 'TOP4',
+        dataType: 'STRING',
+        valueCountMap: {
+            'Phytotherapist': 7, 'Paediatric nurse': 7, 'Nurse, mental health': 6, 'Production engineer': 6
+        }
+    });
+
+    list.push({
+        columnName: 'country',
+        distinctCount: 1,
+        graphType: 'ALL_SAME',
+        dataType: 'STRING',
+        valueCountMap: {
+            'America': 1000
+        }
+    });
+
+    for (let i = 0; i < list.length; i++) {
+        let data = list[i];
+        drawChart(i, data, data.graphType);
+    }
+
+    function drawChart(index, columnData, chartOption) {
+        $('.graphs').append('<div id="graph' + index + '" class="' + chartOption + '"></div>');
+        $('#graph' + index).css('height', '500px').css('width', '500px');
+        let chartDom = document.getElementById('graph' + index);
+        if (chartOption === 'ALL_SAME' || chartOption === 'ALL_UNIQUE') {
+            drawSingleText(chartDom, columnData, chartOption);
+            return;
+        }
+        let myChart = echarts.init(chartDom);
+        let option = getChartOption(chartOption, columnData);
+        option && myChart.setOption(option);
+    }
+
+    function getChartOption(chartOption, columnData) {
+        switch (chartOption) {
+            case 'PIE':
+                return pieChartOption(columnData);
+            case 'COLUMN':
+                return columnChartOption(columnData);
+                break;
+            case 'TOP4':
+                return top4ChartOption(columnData);
+        }
+    }
+
+    function columnChartOption(columnData) {
+        let valueCountMap = columnData.valueCountMap;
+        let labels = Object.keys(valueCountMap);
+        let values = Object.values(valueCountMap);
+
+        return {
+            title: {
+                text: columnData.columnName
+            },
+            xAxis: {
+                type: 'category',
+                data: labels
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    data: values,
+                    type: 'bar',
+                    showBackground: true,
+                    backgroundStyle: {
+                        color: 'rgba(180, 180, 180, 0.2)'
+                    }
+                }
+            ]
+        };
+    }
+
+    function top4ChartOption(columnData) {
+        let valueCountMap = columnData.valueCountMap;
+        let data = Object.entries(valueCountMap)
+            .sort((a, b) => b[1] - a[1])
+            .map(([key, value]) => ({name: key, value: value}));
+
+        let labels = data.map(item => item.name);
+        let values = data.map(item => item.value);
+
+        return {
+            title: {
+                text: columnData.columnName
+            },
+            tooltip: {
+                trigger: 'axis',
+            },
+            xAxis: {
+                type: 'category',
+                data: labels
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                name: 'Percentage',
+                type: 'bar',
+                data: values
+            }]
+        };
+    }
+
+    function drawSingleText(chartDom, columnData, chartOption) {
+        let text = '';
+        let label = '';
+        if (chartOption === 'ALL_SAME') {
+            text = Object.keys(columnData.valueCountMap)[0];
+            label = '단일 값';
+        } else if (chartOption === 'ALL_UNIQUE') {
+            label = '고유 값';
+            text = columnData.distinctCount + '개';
+        }
+        let div = document.createElement('div');
+        div.style.width = '500px';
+        div.style.height = '500px';
+        let column = columnData.columnName;
+
+        div.innerHTML = '<div><h3>' + column + '</h3></div><div>' + label + '</div><div class="value-text">' + text + '</div>';
+
+
+        chartDom.append(div);
+    }
+
+    function pieChartOption(columnData) {
+        let valueCountMap = columnData.valueCountMap;
+        let data = Object.entries(valueCountMap).map(([key, value]) => ({name: key, value: value}));
+
+        return {
+            title: {
+                text: columnData.columnName,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left'
+            },
+            series: [
+                {
+                    name: 'Access From',
+                    type: 'pie',
+                    radius: '50%',
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+    }
+
+</script>
+</html>
+
+
