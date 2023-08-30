@@ -4,10 +4,7 @@ import io.shanepark.sparkcsv.domain.ColumnData;
 import io.shanepark.sparkcsv.service.CsvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -29,10 +26,13 @@ public class ApiController {
         File tmpFile = File.createTempFile("tmp", ".csv");
         csv.transferTo(tmpFile);
 
-        long start = System.currentTimeMillis();
         List<ColumnData> result = csvService.parseCsv(tmpFile);
-        log.info("elapsed: {} ms", System.currentTimeMillis() - start);
         return result;
+    }
+
+    @GetMapping("/estimate")
+    public long estimateTime(@RequestParam(name = "file_size") long fileSize) {
+        return csvService.estimateTime(fileSize);
     }
 
 }

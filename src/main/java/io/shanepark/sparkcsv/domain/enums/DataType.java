@@ -1,4 +1,4 @@
-package io.shanepark.sparkcsv.domain;
+package io.shanepark.sparkcsv.domain.enums;
 
 public enum DataType {
     NUMBER, STRING, DATE, BOOLEAN;

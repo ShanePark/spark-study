@@ -1,5 +1,8 @@
 package io.shanepark.sparkcsv.domain;
 
+import io.shanepark.sparkcsv.domain.enums.DataType;
+import io.shanepark.sparkcsv.domain.enums.GraphType;
+
 import java.util.Map;
 
 public class ColumnData {

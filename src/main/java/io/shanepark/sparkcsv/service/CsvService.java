@@ -1,7 +1,9 @@
 package io.shanepark.sparkcsv.service;
 
 import io.shanepark.sparkcsv.domain.ColumnData;
-import io.shanepark.sparkcsv.domain.DataType;
+import io.shanepark.sparkcsv.domain.TimeEstimate;
+import io.shanepark.sparkcsv.domain.enums.DataType;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
@@ -15,19 +17,33 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class CsvService {
 
-    SparkSession spark;
+    private final SparkSession spark;
+    private final TimeEstimate timeEstimate;
 
     public CsvService() {
-        spark = getSparkSession();
+        this.spark = getSparkSession();
+        this.timeEstimate = new TimeEstimate();
+    }
+
+    public long estimateTime(long fileSize) {
+        return timeEstimate.calcEstimate(fileSize);
     }
 
     public List<ColumnData> parseCsv(File csvFile) {
+        long start = System.currentTimeMillis();
+
         Dataset<Row> dataset = dataset(spark, csvFile);
-        return Arrays.stream(dataset.columns())
+        List<ColumnData> result = Arrays.stream(dataset.columns())
                 .map(column -> makeColumnData(column, dataset))
                 .collect(Collectors.toList());
+
+        long timeTaken = System.currentTimeMillis() - start;
+        timeEstimate.addHistory(csvFile.length(), timeTaken);
+        log.info("elapsed: {} ms", timeTaken);
+        return result;
     }
 
     private Dataset<Row> dataset(SparkSession spark, File csvFile) {
