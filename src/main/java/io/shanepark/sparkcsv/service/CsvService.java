@@ -32,10 +32,15 @@ public class CsvService {
         return timeEstimate.calcEstimate(fileSize);
     }
 
-    public List<ColumnData> parseCsv(File csvFile) {
+    public List<ColumnData> parseCsv(File csvFile, String originalFileName) {
         long start = System.currentTimeMillis();
 
         Dataset<Row> dataset = dataset(spark, csvFile);
+
+        dataset.write()
+                .mode("overwrite")
+                .parquet("/home/shane/Downloads/" + originalFileName + ".parquet");
+
         List<ColumnData> result = Arrays.stream(dataset.columns())
                 .map(column -> makeColumnData(column, dataset))
                 .collect(Collectors.toList());

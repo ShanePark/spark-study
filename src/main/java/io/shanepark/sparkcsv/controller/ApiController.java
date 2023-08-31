@@ -26,7 +26,7 @@ public class ApiController {
         File tmpFile = File.createTempFile("tmp", ".csv");
         csv.transferTo(tmpFile);
 
-        List<ColumnData> result = csvService.parseCsv(tmpFile);
+        List<ColumnData> result = csvService.parseCsv(tmpFile, csv.getOriginalFilename());
         return result;
     }
 

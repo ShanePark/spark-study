@@ -71,6 +71,7 @@
             type: 'GET',
             async: false,
             success: function (data) {
+                $('.graphs').empty();
                 estimateTime = Math.round(data / 1000);
             }
         })

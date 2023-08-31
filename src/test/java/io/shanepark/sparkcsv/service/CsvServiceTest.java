@@ -17,7 +17,7 @@ class CsvServiceTest {
         CsvService csvService = new CsvService();
         File csvFile = new File(TEST_CSV_PATH);
 
-        List<ColumnData> list = csvService.parseCsv(csvFile);
+        List<ColumnData> list = csvService.parseCsv(csvFile, "test");
 
         for (ColumnData columnData : list) {
             System.err.println(columnData);
