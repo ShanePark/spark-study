@@ -34,24 +34,62 @@
       body {
           padding: 2em;
       }
+
+      .processing-time {
+          display: none;
+      }
+
+      .processing-time.processing {
+          display: block;
+      }
   </style>
 </head>
 <body>
 <dlv>
   <form>
     <label for="csv" class="form-label">CSV 파일 선택</label><br/>
-    <input id="csv" type="file" name="csv" class="form-control"/>
+    <input id="csv" type="file" name="csv" class="form-control" accept="text/csv"/>
   </form>
+  <div class="processing-time">
+    <div id="elapsedTime">진행중: <span></span>초</div>
+    <div id="estimatedTime">예상소요시간: <span></span></div>
+  </div>
 </dlv>
 <div class="graphs">
 </div>
 
 </body>
 <script>
+
     $('#csv').on('change', function () {
+        let fileSize = $('#csv')[0].files[0].size;
+        let estimateTime = 0;
+
+        // 1. 예상 소요시간 측정
+        $.ajax({
+            url: '/api/csv/estimate?file_size=' + fileSize,
+            type: 'GET',
+            async: false,
+            success: function (data) {
+                estimateTime = Math.round(data / 1000);
+            }
+        })
+        $('#estimatedTime span').text(estimateTime + '초');
+
+        // Initialize elapsed time to 0
+        let elapsedTime = 0;
+
+        // Start a timer to update the elapsed time
+        const timerId = setInterval(function () {
+            elapsedTime++;
+            $('#elapsedTime span').text(elapsedTime);
+        }, 1000);
+
         var formData = new FormData();
         formData.append('csv', $('#csv')[0].files[0]);
-        $('body').waitMe();
+
+        $('form').waitMe();
+        $('.processing-time').addClass('processing');
         $.ajax({
             url: '/api/csv',
             type: 'POST',
@@ -65,10 +103,13 @@
                 }
             },
             complete: function () {
-                $('body').waitMe('hide');
+                $('form').waitMe('hide');
+                $('.processing-time').removeClass('processing');
+                $('#elapsedTime span').text(0);
+                clearInterval(timerId);
             }
         })
-    })
+    });
 
     function drawChart(index, columnData, chartOption) {
         $('.graphs').append('<div id="graph' + index + '" class="' + chartOption + '"></div>');
