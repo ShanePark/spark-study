@@ -42,6 +42,36 @@
         .processing-time.processing {
             display: block;
         }
+
+        .inner-chart {
+            margin-top: -20px;
+            margin-bottom: -30px;
+        }
+
+        .chart.ALL_UNIQUE .inner-chart, .chart.ALL_SAME .inner-chart {
+            margin-top: 0px;
+            height: 280px;
+        }
+
+        .data {
+            padding-top: 5px;
+            border-top: 1px solid black;
+            max-width: 300px;
+        }
+
+        .column-name {
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            border-bottom: 1px solid black;
+        }
+
+        .row-data {
+            padding-left: 10px;
+            overflow-x: clip;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -60,6 +90,9 @@
 
 </body>
 <script>
+
+  const width = 300;
+  const height = 300;
 
   $('#csv').on('change', function () {
     let fileSize = $('#csv')[0].files[0].size;
@@ -102,19 +135,18 @@
         for (let i = 0; i < graphs.length; i++) {
           let graph = graphs[i];
           drawChart(i, graph, graph.graphType);
+          const columnName = graph.columnName;
+          $('#graph' + i + ' .data').append('<div class="column-name">' + columnName + '</div>');
         }
         const data = result.data;
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
           for (let j = 0; j < row.length; j++) {
             const div = document.createElement('div');
-            div.innerHTML = '<div>' + row[j] + '</div>';
-            $('#graph' + j).append(div);
+            div.innerHTML = '<div class="row-data">' + row[j] + '</div>';
+            $('#graph' + j + ' .data').append(div);
           }
         }
-        document.querySelectorAll('.chart').forEach(chart => {
-          chart.style.height = 'auto';
-        });
       },
       complete: function () {
         $('form').waitMe('hide');
@@ -126,14 +158,16 @@
   });
 
   function drawChart(index, columnData, chartOption) {
-    $('.graphs').append('<div id="graph' + index + '" class="chart ' + chartOption + '"></div>');
-    $('#graph' + index).css('height', '300px').css('width', '300px');
-    let chartDom = document.getElementById('graph' + index);
+    $('.graphs').append('<div id="graph' + index + '" class="chart ' + chartOption + '"><div class="inner-chart"></div><div class="data"></div></div>');
+    let chartDom = document.getElementById('graph' + index).getElementsByClassName('inner-chart')[0];
     if (chartOption === 'ALL_SAME' || chartOption === 'ALL_UNIQUE') {
       drawSingleText(chartDom, columnData, chartOption);
       return;
     }
-    let myChart = echarts.init(chartDom);
+    let myChart = echarts.init(chartDom, null, {
+      width: width,
+      height: height
+    });
     let option = getChartOption(chartOption, columnData);
     option && myChart.setOption(option);
   }
@@ -156,9 +190,6 @@
     let values = Object.values(valueCountMap);
 
     return {
-      title: {
-        text: columnData.columnName
-      },
       tooltip: {
         trigger: 'axis',
       },
@@ -192,9 +223,6 @@
     let values = data.map(item => item.value);
 
     return {
-      title: {
-        text: columnData.columnName
-      },
       tooltip: {
         trigger: 'axis',
       },
@@ -224,11 +252,10 @@
       text = columnData.distinctCount + '개';
     }
     let div = document.createElement('div');
-    div.style.width = '300px';
-    div.style.height = '300px';
-    let column = columnData.columnName;
+    div.style.width = width + 'px';
+    div.style.height = height + 'px';
 
-    div.innerHTML = '<div><h3>' + column + '</h3></div><div>' + label + '</div><div class="value-text">' + text + '</div>';
+    div.innerHTML = '<div><div class="value-label">' + label + '</div><div class="value-text">' + text + '</div>';
 
 
     chartDom.append(div);
@@ -239,10 +266,6 @@
     let data = Object.entries(valueCountMap).map(([key, value]) => ({name: key, value: value}));
 
     return {
-      title: {
-        text: columnData.columnName,
-        left: 'center'
-      },
       tooltip: {
         trigger: 'item'
       },
