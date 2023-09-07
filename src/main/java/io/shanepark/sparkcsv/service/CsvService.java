@@ -46,7 +46,8 @@ public class CsvService {
                 .map(row -> {
                     List<String> rowList = new ArrayList<>();
                     for (int i = 0; i < row.length(); i++) {
-                        rowList.add(row.get(i).toString());
+                        Object data = row.get(i);
+                        rowList.add(data == null ? "" : data.toString());
                     }
                     return rowList;
                 }).collect(Collectors.toList());
