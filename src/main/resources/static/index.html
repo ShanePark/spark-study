@@ -1,59 +1,59 @@
 <html>
 <head>
-  <title>CSV 업로드</title>
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-  <!-- ECharts -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"
-          integrity="sha256-EVZCmhajjLhgTcxlGMGUBtQiYULZCPjt0uNTFEPFTRk=" crossorigin="anonymous"></script>
-  <!-- Wait ME -->
-  <script src="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.js"
-          integrity="sha256-oGX4TEGGqGIQgVjZLz74NPm62KtrhR94cxSTRpzcN+o=" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.css"
-        integrity="sha256-f4pKuDVe4fH+x/e/ZkA4CgDKOA5SuSlvCnB4BjMb4Ys=" crossorigin="anonymous">
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-          crossorigin="anonymous"></script>
-  <style>
-      .graphs {
-          display: flex;
-          overflow-x: scroll;
-      }
+    <title>CSV 업로드</title>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"
+            integrity="sha256-EVZCmhajjLhgTcxlGMGUBtQiYULZCPjt0uNTFEPFTRk=" crossorigin="anonymous"></script>
+    <!-- Wait ME -->
+    <script src="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.js"
+            integrity="sha256-oGX4TEGGqGIQgVjZLz74NPm62KtrhR94cxSTRpzcN+o=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.css"
+          integrity="sha256-f4pKuDVe4fH+x/e/ZkA4CgDKOA5SuSlvCnB4BjMb4Ys=" crossorigin="anonymous">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous"></script>
+    <style>
+        .graphs {
+            display: flex;
+            overflow-x: scroll;
+        }
 
-      .value-text {
-          margin-top: 2em;
-          font-size: 2em;
-          font-weight: bold;
-          text-align: center;
-      }
+        .value-text {
+            margin-top: 2em;
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+        }
 
-      body {
-          padding: 2em;
-      }
+        body {
+            padding: 2em;
+        }
 
-      .processing-time {
-          display: none;
-      }
+        .processing-time {
+            display: none;
+        }
 
-      .processing-time.processing {
-          display: block;
-      }
-  </style>
+        .processing-time.processing {
+            display: block;
+        }
+    </style>
 </head>
 <body>
 <dlv>
-  <form>
-    <label for="csv" class="form-label">CSV 파일 선택</label><br/>
-    <input id="csv" type="file" name="csv" class="form-control" accept="text/csv"/>
-  </form>
-  <div class="processing-time">
-    <div id="elapsedTime">진행중: <span></span>초</div>
-    <div id="estimatedTime">예상소요시간: <span></span></div>
-  </div>
+    <form>
+        <label for="csv" class="form-label">CSV 파일 선택</label><br/>
+        <input id="csv" type="file" name="csv" class="form-control" accept="text/csv"/>
+    </form>
+    <div class="processing-time">
+        <div id="elapsedTime">진행중: <span></span>초</div>
+        <div id="estimatedTime">예상소요시간: <span></span></div>
+    </div>
 </dlv>
 <div class="graphs">
 </div>
@@ -61,199 +61,212 @@
 </body>
 <script>
 
-    $('#csv').on('change', function () {
-        let fileSize = $('#csv')[0].files[0].size;
-        let estimateTime = 0;
+  $('#csv').on('change', function () {
+    let fileSize = $('#csv')[0].files[0].size;
+    let estimateTime = 0;
 
-        // 1. 예상 소요시간 측정
-        $.ajax({
-            url: '/api/csv/estimate?file_size=' + fileSize,
-            type: 'GET',
-            async: false,
-            success: function (data) {
-                $('.graphs').empty();
-                estimateTime = Math.round(data / 1000);
+    // 1. 예상 소요시간 측정
+    $.ajax({
+      url: '/api/csv/estimate?file_size=' + fileSize,
+      type: 'GET',
+      async: false,
+      success: function (data) {
+        $('.graphs').empty();
+        estimateTime = Math.round(data / 1000);
+      }
+    })
+    $('#estimatedTime span').text(estimateTime + '초');
+
+    // Initialize elapsed time to 0
+    let elapsedTime = 0;
+
+    // Start a timer to update the elapsed time
+    const timerId = setInterval(function () {
+      elapsedTime++;
+      $('#elapsedTime span').text(elapsedTime);
+    }, 1000);
+
+    var formData = new FormData();
+    formData.append('csv', $('#csv')[0].files[0]);
+
+    $('form').waitMe();
+    $('.processing-time').addClass('processing');
+    $.ajax({
+      url: '/api/csv',
+      type: 'POST',
+      data: formData,
+      contentType: false,
+      processData: false,
+      success: function (result) {
+        const graphs = result.graphs;
+        for (let i = 0; i < graphs.length; i++) {
+          let graph = graphs[i];
+          drawChart(i, graph, graph.graphType);
+        }
+        const data = result.data;
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          for (let j = 0; j < row.length; j++) {
+            const div = document.createElement('div');
+            div.innerHTML = '<div>' + row[j] + '</div>';
+            $('#graph' + j).append(div);
+          }
+        }
+        document.querySelectorAll('.chart').forEach(chart => {
+          chart.style.height = 'auto';
+        });
+      },
+      complete: function () {
+        $('form').waitMe('hide');
+        $('.processing-time').removeClass('processing');
+        $('#elapsedTime span').text(0);
+        clearInterval(timerId);
+      }
+    })
+  });
+
+  function drawChart(index, columnData, chartOption) {
+    $('.graphs').append('<div id="graph' + index + '" class="chart ' + chartOption + '"></div>');
+    $('#graph' + index).css('height', '300px').css('width', '300px');
+    let chartDom = document.getElementById('graph' + index);
+    if (chartOption === 'ALL_SAME' || chartOption === 'ALL_UNIQUE') {
+      drawSingleText(chartDom, columnData, chartOption);
+      return;
+    }
+    let myChart = echarts.init(chartDom);
+    let option = getChartOption(chartOption, columnData);
+    option && myChart.setOption(option);
+  }
+
+  function getChartOption(chartOption, columnData) {
+    switch (chartOption) {
+      case 'PIE':
+        return pieChartOption(columnData);
+      case 'COLUMN':
+        return columnChartOption(columnData);
+        break;
+      case 'TOP4':
+        return top4ChartOption(columnData);
+    }
+  }
+
+  function columnChartOption(columnData) {
+    let valueCountMap = columnData.graphData;
+    let labels = Object.keys(valueCountMap);
+    let values = Object.values(valueCountMap);
+
+    return {
+      title: {
+        text: columnData.columnName
+      },
+      tooltip: {
+        trigger: 'axis',
+      },
+      xAxis: {
+        type: 'category',
+        data: labels
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [
+        {
+          data: values,
+          type: 'bar',
+          showBackground: true,
+          backgroundStyle: {
+            color: 'rgba(180, 180, 180, 0.2)'
+          }
+        }
+      ]
+    };
+  }
+
+  function top4ChartOption(columnData) {
+    let valueCountMap = columnData.graphData;
+    let data = Object.entries(valueCountMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, value]) => ({name: key, value: value}));
+
+    let labels = data.map(item => item.name);
+    let values = data.map(item => item.value);
+
+    return {
+      title: {
+        text: columnData.columnName
+      },
+      tooltip: {
+        trigger: 'axis',
+      },
+      xAxis: {
+        type: 'category',
+        data: labels
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [{
+        name: 'Percentage',
+        type: 'bar',
+        data: values
+      }]
+    };
+  }
+
+  function drawSingleText(chartDom, columnData, chartOption) {
+    let text = '';
+    let label = '';
+    if (chartOption === 'ALL_SAME') {
+      text = Object.keys(columnData.graphData)[0];
+      label = '단일 값';
+    } else if (chartOption === 'ALL_UNIQUE') {
+      label = '고유 값';
+      text = columnData.distinctCount + '개';
+    }
+    let div = document.createElement('div');
+    div.style.width = '300px';
+    div.style.height = '300px';
+    let column = columnData.columnName;
+
+    div.innerHTML = '<div><h3>' + column + '</h3></div><div>' + label + '</div><div class="value-text">' + text + '</div>';
+
+
+    chartDom.append(div);
+  }
+
+  function pieChartOption(columnData) {
+    let valueCountMap = columnData.graphData;
+    let data = Object.entries(valueCountMap).map(([key, value]) => ({name: key, value: value}));
+
+    return {
+      title: {
+        text: columnData.columnName,
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'item'
+      },
+      legend: {
+        orient: 'vertical',
+        left: 'left'
+      },
+      series: [
+        {
+          name: 'Access From',
+          type: 'pie',
+          radius: '50%',
+          data: data,
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
             }
-        })
-        $('#estimatedTime span').text(estimateTime + '초');
-
-        // Initialize elapsed time to 0
-        let elapsedTime = 0;
-
-        // Start a timer to update the elapsed time
-        const timerId = setInterval(function () {
-            elapsedTime++;
-            $('#elapsedTime span').text(elapsedTime);
-        }, 1000);
-
-        var formData = new FormData();
-        formData.append('csv', $('#csv')[0].files[0]);
-
-        $('form').waitMe();
-        $('.processing-time').addClass('processing');
-        $.ajax({
-            url: '/api/csv',
-            type: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function (list) {
-                for (let i = 0; i < list.length; i++) {
-                    let data = list[i];
-                    drawChart(i, data, data.graphType);
-                }
-            },
-            complete: function () {
-                $('form').waitMe('hide');
-                $('.processing-time').removeClass('processing');
-                $('#elapsedTime span').text(0);
-                clearInterval(timerId);
-            }
-        })
-    });
-
-    function drawChart(index, columnData, chartOption) {
-        $('.graphs').append('<div id="graph' + index + '" class="' + chartOption + '"></div>');
-        $('#graph' + index).css('height', '500px').css('width', '500px');
-        let chartDom = document.getElementById('graph' + index);
-        if (chartOption === 'ALL_SAME' || chartOption === 'ALL_UNIQUE') {
-            drawSingleText(chartDom, columnData, chartOption);
-            return;
+          }
         }
-        let myChart = echarts.init(chartDom);
-        let option = getChartOption(chartOption, columnData);
-        option && myChart.setOption(option);
-    }
-
-    function getChartOption(chartOption, columnData) {
-        switch (chartOption) {
-            case 'PIE':
-                return pieChartOption(columnData);
-            case 'COLUMN':
-                return columnChartOption(columnData);
-                break;
-            case 'TOP4':
-                return top4ChartOption(columnData);
-        }
-    }
-
-    function columnChartOption(columnData) {
-        let valueCountMap = columnData.graphData;
-        let labels = Object.keys(valueCountMap);
-        let values = Object.values(valueCountMap);
-
-        return {
-            title: {
-                text: columnData.columnName
-            },
-            tooltip: {
-                trigger: 'axis',
-            },
-            xAxis: {
-                type: 'category',
-                data: labels
-            },
-            yAxis: {
-                type: 'value'
-            },
-            series: [
-                {
-                    data: values,
-                    type: 'bar',
-                    showBackground: true,
-                    backgroundStyle: {
-                        color: 'rgba(180, 180, 180, 0.2)'
-                    }
-                }
-            ]
-        };
-    }
-
-    function top4ChartOption(columnData) {
-        let valueCountMap = columnData.graphData;
-        let data = Object.entries(valueCountMap)
-            .sort((a, b) => b[1] - a[1])
-            .map(([key, value]) => ({name: key, value: value}));
-
-        let labels = data.map(item => item.name);
-        let values = data.map(item => item.value);
-
-        return {
-            title: {
-                text: columnData.columnName
-            },
-            tooltip: {
-                trigger: 'axis',
-            },
-            xAxis: {
-                type: 'category',
-                data: labels
-            },
-            yAxis: {
-                type: 'value'
-            },
-            series: [{
-                name: 'Percentage',
-                type: 'bar',
-                data: values
-            }]
-        };
-    }
-
-    function drawSingleText(chartDom, columnData, chartOption) {
-        let text = '';
-        let label = '';
-        if (chartOption === 'ALL_SAME') {
-            text = Object.keys(columnData.graphData)[0];
-            label = '단일 값';
-        } else if (chartOption === 'ALL_UNIQUE') {
-            label = '고유 값';
-            text = columnData.distinctCount + '개';
-        }
-        let div = document.createElement('div');
-        div.style.width = '500px';
-        div.style.height = '500px';
-        let column = columnData.columnName;
-
-        div.innerHTML = '<div><h3>' + column + '</h3></div><div>' + label + '</div><div class="value-text">' + text + '</div>';
-
-
-        chartDom.append(div);
-    }
-
-    function pieChartOption(columnData) {
-        let valueCountMap = columnData.graphData;
-        let data = Object.entries(valueCountMap).map(([key, value]) => ({name: key, value: value}));
-
-        return {
-            title: {
-                text: columnData.columnName,
-                left: 'center'
-            },
-            tooltip: {
-                trigger: 'item'
-            },
-            legend: {
-                orient: 'vertical',
-                left: 'left'
-            },
-            series: [
-                {
-                    name: 'Access From',
-                    type: 'pie',
-                    radius: '50%',
-                    data: data,
-                    emphasis: {
-                        itemStyle: {
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowColor: 'rgba(0, 0, 0, 0.5)'
-                        }
-                    }
-                }
-            ]
-        };
-    }
+      ]
+    };
+  }
 
 </script>
 </html>

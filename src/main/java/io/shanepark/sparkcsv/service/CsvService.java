@@ -8,6 +8,7 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -23,6 +24,9 @@ public class CsvService {
     private final SparkSession spark;
     private final TimeEstimate timeEstimate;
 
+    @Value("${parquet.save_path}")
+    String parquetSavePath;
+
     public CsvService() {
         this.spark = getSparkSession();
         this.timeEstimate = new TimeEstimate();
@@ -32,6 +36,22 @@ public class CsvService {
         return timeEstimate.calcEstimate(fileSize);
     }
 
+    public List<List<String>> readParquet(String filename, int page, int size) {
+        Dataset<Row> dataset = spark.read().parquet(parquetSavePath + filename + ".parquet");
+
+        dataset.createOrReplaceTempView("parquetFile");
+        Dataset<Row> sqlDF = spark.sql("SELECT * FROM parquetFile LIMIT " + size + " OFFSET " + page * size);
+
+        return sqlDF.collectAsList().stream()
+                .map(row -> {
+                    List<String> rowList = new ArrayList<>();
+                    for (int i = 0; i < row.length(); i++) {
+                        rowList.add(row.get(i).toString());
+                    }
+                    return rowList;
+                }).collect(Collectors.toList());
+    }
+
     public List<ColumnData> parseCsv(File csvFile, String originalFileName) {
         long start = System.currentTimeMillis();
 
@@ -39,7 +59,7 @@ public class CsvService {
 
         dataset.write()
                 .mode("overwrite")
-                .parquet("/home/shane/Downloads/" + originalFileName + ".parquet");
+                .parquet(parquetSavePath + originalFileName + ".parquet");
 
         List<ColumnData> result = Arrays.stream(dataset.columns())
                 .map(column -> makeColumnData(column, dataset))

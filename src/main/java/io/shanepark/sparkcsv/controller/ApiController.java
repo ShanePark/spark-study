@@ -9,7 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,13 +22,15 @@ public class ApiController {
     private final CsvService csvService;
 
     @PostMapping
-    public List<ColumnData> parseCsv(@RequestParam(name = "csv") MultipartFile csv) throws IOException {
+    public Map<String, Object> parseCsv(@RequestParam(name = "csv") MultipartFile csv) throws IOException {
         log.info("csv: {},  size: {}", csv.getOriginalFilename(), csv.getSize());
 
         File tmpFile = File.createTempFile("tmp", ".csv");
         csv.transferTo(tmpFile);
 
-        List<ColumnData> result = csvService.parseCsv(tmpFile, csv.getOriginalFilename());
+        Map<String, Object> result = new HashMap<>();
+        result.put("graphs", csvService.parseCsv(tmpFile, csv.getOriginalFilename()));
+        result.put("data", csvService.readParquet(csv.getOriginalFilename(), 0, 50));
         return result;
     }
 
