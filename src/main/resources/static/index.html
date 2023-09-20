@@ -59,7 +59,7 @@
             max-width: 300px;
         }
 
-        .column-name {
+        th {
             font-weight: bold;
             text-align: center;
             font-size: 1.2em;
@@ -85,8 +85,10 @@
         <div id="estimatedTime">예상소요시간: <span></span></div>
     </div>
 </dlv>
-<div class="graphs">
-</div>
+<table class="graphs">
+    <tr class="column-row"></tr>
+    <tr class="graph-row"></tr>
+</table>
 
 </body>
 <script>
@@ -98,13 +100,14 @@
     let fileSize = $('#csv')[0].files[0].size;
     let estimateTime = 0;
 
-    // 1. 예상 소요시간 측정
+    // 1. Get estimated time
     $.ajax({
       url: '/api/csv/estimate?file_size=' + fileSize,
       type: 'GET',
       async: false,
       success: function (data) {
-        $('.graphs').empty();
+        $('.graphs tr').empty();
+        $('.graphs data-row').remove();
         estimateTime = Math.round(data / 1000);
       }
     })
@@ -124,6 +127,7 @@
 
     $('form').waitMe();
     $('.processing-time').addClass('processing');
+
     $.ajax({
       url: '/api/csv',
       type: 'POST',
@@ -134,18 +138,24 @@
         const graphs = result.graphs;
         for (let i = 0; i < graphs.length; i++) {
           let graph = graphs[i];
-          drawChart(i, graph, graph.graphType);
           const columnName = graph.columnName;
-          $('#graph' + i + ' .data').append('<div class="column-name">' + columnName + '</div>');
+          $('.graphs tr.column-row').append('<th>' + columnName + '</th>');
+          const chartOption = graph.graphType;
+          $('.graphs tr.graph-row').append('<td id="graph' + i + '" class="chart ' + chartOption + '"><div class="inner-chart"></div><div class="data"></div></td>');
+          drawChart(i, graph, chartOption);
         }
         const data = result.data;
+        let columnSize = data[0].length;
         for (let i = 0; i < data.length; i++) {
-          const row = data[i];
-          for (let j = 0; j < row.length; j++) {
-            const div = document.createElement('div');
-            div.innerHTML = '<div class="row-data">' + row[j] + '</div>';
-            $('#graph' + j + ' .data').append(div);
+          const tr = document.createElement('tr');
+          tr.classList.add('data-row');
+          for (let j = 0; j < columnSize; j++) {
+            const td = document.createElement('td');
+            td.innerText = data[i][j];
+            td.classList.add('row-data');
+            tr.append(td);
           }
+          $('.graphs tbody').append(tr);
         }
       },
       complete: function () {
@@ -158,7 +168,6 @@
   });
 
   function drawChart(index, columnData, chartOption) {
-    $('.graphs').append('<div id="graph' + index + '" class="chart ' + chartOption + '"><div class="inner-chart"></div><div class="data"></div></div>');
     let chartDom = document.getElementById('graph' + index).getElementsByClassName('inner-chart')[0];
     if (chartOption === 'ALL_SAME' || chartOption === 'ALL_UNIQUE') {
       drawSingleText(chartDom, columnData, chartOption);
@@ -234,7 +243,6 @@
         type: 'value'
       },
       series: [{
-        name: 'Percentage',
         type: 'bar',
         data: values
       }]
