@@ -27,7 +27,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.apache.spark:spark-core_2.13:3.4.1'
     implementation 'org.apache.spark:spark-sql_2.13:3.4.1'
-    implementation 'org.codehaus.janino:janino:3.1.10'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

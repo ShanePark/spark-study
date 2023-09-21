@@ -1,7 +1,7 @@
 package io.shanepark.sparkcsv.service;
 
 import io.shanepark.sparkcsv.domain.ColumnData;
-import io.shanepark.sparkcsv.domain.TimeEstimate;
+import io.shanepark.sparkcsv.domain.CsvParseResult;
 import io.shanepark.sparkcsv.domain.enums.DataType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.*;
@@ -10,8 +10,10 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -22,22 +24,28 @@ import java.util.stream.Collectors;
 public class CsvService {
 
     private final SparkSession spark;
-    private final TimeEstimate timeEstimate;
 
     @Value("${parquet.save_path}")
     String parquetSavePath;
 
     public CsvService() {
         this.spark = getSparkSession();
-        this.timeEstimate = new TimeEstimate();
     }
 
-    public long estimateTime(long fileSize) {
-        return timeEstimate.calcEstimate(fileSize);
+    public CsvParseResult getGraphAndData(MultipartFile csv) throws IOException {
+        File tmpFile = File.createTempFile("tmp", ".csv");
+        csv.transferTo(tmpFile);
+
+        Dataset<Row> dataset = makeDataset(tmpFile);
+        List<ColumnData> graphs = parseCsv(dataset);
+        File parquetFile = makeParquet(dataset, csv.getOriginalFilename());
+        List<List<String>> data = readParquet(parquetFile, 0, 100);
+
+        return new CsvParseResult(graphs, data);
     }
 
-    public List<List<String>> readParquet(String filename, int page, int size) {
-        Dataset<Row> dataset = spark.read().parquet(parquetSavePath + filename + ".parquet");
+    private List<List<String>> readParquet(File parquetFile, int page, int size) {
+        Dataset<Row> dataset = spark.read().parquet(parquetFile.getAbsolutePath());
 
         dataset.createOrReplaceTempView("parquetFile");
         Dataset<Row> sqlDF = spark.sql("SELECT * FROM parquetFile LIMIT " + size + " OFFSET " + page * size);
@@ -53,26 +61,29 @@ public class CsvService {
                 }).collect(Collectors.toList());
     }
 
-    public List<ColumnData> parseCsv(File csvFile, String originalFileName) {
-        long start = System.currentTimeMillis();
-
-        Dataset<Row> dataset = dataset(spark, csvFile);
-
-        dataset.write()
-                .mode("overwrite")
-                .parquet(parquetSavePath + originalFileName + ".parquet");
-
+    private List<ColumnData> parseCsv(Dataset<Row> dataset) {
         List<ColumnData> result = Arrays.stream(dataset.columns())
                 .map(column -> makeColumnData(column, dataset))
                 .collect(Collectors.toList());
-
-        long timeTaken = System.currentTimeMillis() - start;
-        timeEstimate.addHistory(csvFile.length(), timeTaken);
-        log.info("elapsed: {} ms", timeTaken);
         return result;
     }
 
-    private Dataset<Row> dataset(SparkSession spark, File csvFile) {
+    private File makeParquet(Dataset<Row> dataset, String originalFileName) {
+        File parquetFile = new File(parquetSavePath + originalFileName + ".parquet");
+
+        if (parquetFile.exists()) {
+            log.info("parquet file already exists: {}", parquetFile.getAbsolutePath());
+            return parquetFile;
+        }
+
+        dataset.write()
+                .mode("overwrite")
+                .parquet(parquetFile.getAbsolutePath());
+
+        return parquetFile;
+    }
+
+    private Dataset<Row> makeDataset(File csvFile) {
         // 1. read csv file
         Dataset<Row> dataset = spark.read()
                 .format("csv")
@@ -238,7 +249,7 @@ public class CsvService {
         return spark;
     }
 
-    public String renameColumnName(String columnName) {
+    private String renameColumnName(String columnName) {
         StringBuilder sb = new StringBuilder();
         boolean lastWasUnderscore = false;
 
