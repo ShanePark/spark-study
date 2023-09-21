@@ -1,93 +1,101 @@
 <html>
 <head>
-    <title>CSV 업로드</title>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <!-- ECharts -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"
-            integrity="sha256-EVZCmhajjLhgTcxlGMGUBtQiYULZCPjt0uNTFEPFTRk=" crossorigin="anonymous"></script>
-    <!-- Wait ME -->
-    <script src="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.js"
-            integrity="sha256-oGX4TEGGqGIQgVjZLz74NPm62KtrhR94cxSTRpzcN+o=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.css"
-          integrity="sha256-f4pKuDVe4fH+x/e/ZkA4CgDKOA5SuSlvCnB4BjMb4Ys=" crossorigin="anonymous">
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-            crossorigin="anonymous"></script>
-    <style>
-        .graphs {
-            display: flex;
-            overflow-x: scroll;
-        }
+  <title>CSV 업로드</title>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"
+          integrity="sha256-EVZCmhajjLhgTcxlGMGUBtQiYULZCPjt0uNTFEPFTRk=" crossorigin="anonymous"></script>
+  <!-- Wait ME -->
+  <script src="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.js"
+          integrity="sha256-oGX4TEGGqGIQgVjZLz74NPm62KtrhR94cxSTRpzcN+o=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/waitme@1.19.0/waitMe.min.css"
+        integrity="sha256-f4pKuDVe4fH+x/e/ZkA4CgDKOA5SuSlvCnB4BjMb4Ys=" crossorigin="anonymous">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+          crossorigin="anonymous"></script>
 
-        .value-text {
-            margin-top: 2em;
-            font-size: 2em;
-            font-weight: bold;
-            text-align: center;
-        }
+  <style>
+      .graphs {
+          display: flex;
+          overflow-x: scroll;
+      }
 
-        body {
-            padding: 2em;
-        }
+      .value-text {
+          margin-top: 2em;
+          font-size: 2em;
+          font-weight: bold;
+          text-align: center;
+      }
 
-        .processing-time {
-            display: none;
-        }
+      body {
+          padding: 2em;
+      }
 
-        .processing-time.processing {
-            display: block;
-        }
+      .processing-time {
+          display: none;
+      }
 
-        .inner-chart {
-            margin-top: -20px;
-            margin-bottom: -30px;
-        }
+      .processing-time.processing {
+          display: block;
+      }
 
-        .chart.ALL_UNIQUE .inner-chart, .chart.ALL_SAME .inner-chart {
-            margin-top: 0px;
-            height: 280px;
-        }
+      .inner-chart {
+          margin-bottom: -30px;
+      }
 
-        .data {
-            padding-top: 5px;
-            border-top: 1px solid black;
-            max-width: 300px;
-        }
+      .chart.ALL_UNIQUE .inner-chart, .chart.ALL_SAME .inner-chart {
+          margin-top: 20px;
+          height: 280px;
+      }
 
-        th {
-            font-weight: bold;
-            text-align: center;
-            font-size: 1.2em;
-            margin-bottom: 5px;
-            border-bottom: 1px solid black;
-        }
+      th {
+          font-weight: bold;
+          text-align: center;
+          font-size: 1.3em;
+          padding: 10px;
+          background: #efefef;
+      }
 
-        .row-data {
-            padding-left: 10px;
-            overflow-x: clip;
-            text-overflow: ellipsis;
-        }
-    </style>
+      .row-data {
+          padding: 10px;
+          overflow-x: clip;
+          text-overflow: ellipsis;
+      }
+
+      table {
+          border: 3px solid #efefef;
+      }
+
+      .data-row-0 td {
+          border-top: 3px solid #efefef;
+      }
+
+      td {
+          border-right: 1px solid #efefef;
+      }
+  </style>
 </head>
 <body>
 <dlv>
-    <form>
-        <label for="csv" class="form-label">CSV 파일 선택</label><br/>
-        <input id="csv" type="file" name="csv" class="form-control" accept="text/csv"/>
-    </form>
-    <div class="processing-time">
-        <div id="elapsedTime">진행중: <span></span>초</div>
-        <div id="estimatedTime">예상소요시간: <span></span></div>
-    </div>
+  <form>
+    <label for="csv" class="form-label">CSV 파일 선택</label><br/>
+    <input id="csv" type="file" name="csv" class="form-control" accept="text/csv"/>
+  </form>
+  <div class="processing-time">
+    <div id="elapsedTime">진행중: <span></span>초</div>
+    <div id="estimatedTime">예상소요시간: <span></span></div>
+  </div>
 </dlv>
 <table class="graphs">
-    <tr class="column-row"></tr>
-    <tr class="graph-row"></tr>
+  <tbody>
+  <tr class="column-row"></tr>
+  <tr class="graph-row"></tr>
+  </tbody>
 </table>
 
 </body>
@@ -136,19 +144,22 @@
       processData: false,
       success: function (result) {
         const graphs = result.graphs;
+        $('.graphs tr.column-row').append('<th>#</th>');
+        $('.graphs tr.graph-row').append('<th></th>');
         for (let i = 0; i < graphs.length; i++) {
           let graph = graphs[i];
           const columnName = graph.columnName;
           $('.graphs tr.column-row').append('<th>' + columnName + '</th>');
           const chartOption = graph.graphType;
-          $('.graphs tr.graph-row').append('<td id="graph' + i + '" class="chart ' + chartOption + '"><div class="inner-chart"></div><div class="data"></div></td>');
+          $('.graphs tr.graph-row').append('<td id="graph' + i + '" class="chart ' + chartOption + '"><div class="inner-chart"></div></td>');
           drawChart(i, graph, chartOption);
         }
         const data = result.data;
         let columnSize = data[0].length;
         for (let i = 0; i < data.length; i++) {
           const tr = document.createElement('tr');
-          tr.classList.add('data-row');
+          tr.classList.add('data-row-' + i);
+          $(tr).append('<th>' + (i + 1) + '</th>');
           for (let j = 0; j < columnSize; j++) {
             const td = document.createElement('td');
             td.innerText = data[i][j];

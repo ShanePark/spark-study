@@ -4,8 +4,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TimeEstimate {
 
-    // 1 byte / ms because it's really slow for the first request
-    private final long INITIAL_FILE_PROCESS_PER_MILLISECOND = 1;
+    private final long INITIAL_FILE_PROCESS_PER_MILLISECOND = 100;
 
     // only use last 5 history
     private final int HISTORY_SIZE = 5;
