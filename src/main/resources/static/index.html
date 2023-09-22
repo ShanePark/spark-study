@@ -104,6 +104,11 @@
   const height = 300;
 
   $('#csv').on('change', async function () {
+    const file = $('#csv')[0].files[0]
+    if (!file) {
+      return;
+    }
+
     let elapsedTime = 0;
     $('.graphs tr').empty();
     $('.graphs data-row').remove();
@@ -114,7 +119,7 @@
     }, 1000);
 
     var formData = new FormData();
-    formData.append('csv', $('#csv')[0].files[0]);
+    formData.append('csv', file);
 
     $('form').waitMe();
     $('.processing-time').addClass('processing');

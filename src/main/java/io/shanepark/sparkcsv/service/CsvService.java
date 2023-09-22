@@ -12,7 +12,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,9 +34,6 @@ public class CsvService {
     private final AtomicLong idGenerator = new AtomicLong(0);
     private final WebsocketHandler websocketHandler;
     private final ResultDB resultDB;
-
-    @Value("${parquet.save_path}")
-    String parquetSavePath;
 
     public long askJob(MultipartFile csv) {
         long jobId = idGenerator.getAndIncrement();
@@ -95,7 +91,7 @@ public class CsvService {
     }
 
     private File makeParquet(Dataset<Row> dataset, String originalFileName) {
-        File parquetFile = new File(parquetSavePath + originalFileName + ".parquet");
+        File parquetFile = new File("/tmp/" + originalFileName + ".parquet");
 
         if (parquetFile.exists()) {
             log.info("parquet file already exists: {}", parquetFile.getAbsolutePath());

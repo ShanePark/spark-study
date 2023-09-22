@@ -11,4 +11,17 @@ examples that demonstrate fundamental tasks like reading CSV files and convertin
 - Java 1.8 or higher
 - Apache Spark 3.4.1
 - Gradle
-- Hadoop (optional)
+
+##        
+
+When you use java 17+ you will get the following error:
+
+```
+cannot access class sun.nio.ch.DirectBuffer (in module java.base) because module java.base does not export sun.nio.ch to unnamed module
+```
+
+in this case, you should add vm option `--add-exports java.base/sun.nio.ch=ALL-UNNAMED"` to your run configuration.
+for example, in IntelliJ Idea, you can add this option to the `VM options` field in the `Run/Debug Configurations`
+dialog.
+
+![image](images/idea-run-config.png)

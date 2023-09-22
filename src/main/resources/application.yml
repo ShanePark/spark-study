@@ -8,6 +8,3 @@ spring:
     multipart:
       max-file-size: 1000MB
       max-request-size: 1000MB
-
-parquet:
-  save_path: /home/shane/Downloads/parquet/
