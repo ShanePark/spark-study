@@ -1,0 +1,16 @@
+logging:
+  level:
+    org.apache.spark: ERROR
+    org.sparkproject.jetty: ERROR
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+
+parquet:
+  save_path: /home/shane/Downloads/parquet/
+
+
+spring.output.ansi.enabled: ALWAYS

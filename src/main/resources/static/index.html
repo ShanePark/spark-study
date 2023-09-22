@@ -103,13 +103,11 @@
   const width = 300;
   const height = 300;
 
-  $('#csv').on('change', function () {
-    // Initialize
+  $('#csv').on('change', async function () {
     let elapsedTime = 0;
     $('.graphs tr').empty();
     $('.graphs data-row').remove();
 
-    // Start a timer to update the elapsed time
     const timerId = setInterval(function () {
       elapsedTime++;
       $('#elapsedTime span').text(elapsedTime);
@@ -121,12 +119,25 @@
     $('form').waitMe();
     $('.processing-time').addClass('processing');
 
+    const jobId = await askJob(formData);
+
+    const websocket = new WebSocket('ws://localhost:8080/websocket');
+    websocket.onopen = function (event) {
+      websocket.send(jobId + '');
+    };
+
+    websocket.onmessage = (e) => {
+      renderResult(jobId, timerId, websocket);
+      $('form').waitMe('hide');
+      clearInterval(timerId);
+      websocket.close();
+    }
+  });
+
+  function renderResult(jobId) {
     $.ajax({
-      url: '/api/csv',
-      type: 'POST',
-      data: formData,
-      contentType: false,
-      processData: false,
+      url: '/api/csv?jobId=' + jobId,
+      type: 'GET',
       success: function (result) {
         const graphs = result.graphs;
         $('.graphs tr.column-row').append('<th>#</th>');
@@ -153,15 +164,30 @@
           }
           $('.graphs tbody').append(tr);
         }
-      },
-      complete: function () {
-        $('form').waitMe('hide');
+
         $('.processing-time').removeClass('processing');
         $('#elapsedTime span').text(0);
-        clearInterval(timerId);
-      }
-    })
-  });
+      },
+    });
+  }
+
+  async function askJob(formData) {
+    return new Promise((resolve, reject) => {
+      $.ajax({
+        url: '/api/csv',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (result) {
+          resolve(result);
+        },
+        error: function (error) {
+          reject(error);
+        }
+      });
+    });
+  }
 
   function drawChart(index, columnData, chartOption) {
     let chartDom = document.getElementById('graph' + index).getElementsByClassName('inner-chart')[0];

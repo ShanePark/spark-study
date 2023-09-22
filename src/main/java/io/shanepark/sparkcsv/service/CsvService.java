@@ -1,14 +1,19 @@
 package io.shanepark.sparkcsv.service;
 
+import io.shanepark.sparkcsv.database.ResultDB;
 import io.shanepark.sparkcsv.domain.ColumnData;
 import io.shanepark.sparkcsv.domain.CsvParseResult;
 import io.shanepark.sparkcsv.domain.enums.DataType;
+import io.shanepark.sparkcsv.websocket.WebsocketHandler;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,31 +22,52 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CsvService {
 
-    private final SparkSession spark;
+    private final SparkSession spark = getSparkSession();
+    private final ObjectProvider<CsvService> csvServiceProvider;
+    private final AtomicLong idGenerator = new AtomicLong(0);
+    private final WebsocketHandler websocketHandler;
+    private final ResultDB resultDB;
 
     @Value("${parquet.save_path}")
     String parquetSavePath;
 
-    public CsvService() {
-        this.spark = getSparkSession();
+    public long askJob(MultipartFile csv) {
+        long jobId = idGenerator.getAndIncrement();
+        CsvService service = csvServiceProvider.getObject();
+        service.makeGraphAndData(jobId, csv);
+        return jobId;
     }
 
-    public CsvParseResult getGraphAndData(MultipartFile csv) throws IOException {
-        File tmpFile = File.createTempFile("tmp", ".csv");
-        csv.transferTo(tmpFile);
+    public CsvParseResult getResult(long jobId) {
+        return resultDB.getResult(jobId);
+    }
 
-        Dataset<Row> dataset = makeDataset(tmpFile);
-        List<ColumnData> graphs = parseCsv(dataset);
-        File parquetFile = makeParquet(dataset, csv.getOriginalFilename());
-        List<List<String>> data = readParquet(parquetFile, 0, 100);
+    @Async
+    public void makeGraphAndData(long jobId, MultipartFile csv) {
+        try {
+            File tmpFile = File.createTempFile("tmp", ".csv");
+            csv.transferTo(tmpFile);
 
-        return new CsvParseResult(graphs, data);
+            Dataset<Row> dataset = makeDataset(tmpFile);
+            List<ColumnData> graphs = parseCsv(dataset);
+            File parquetFile = makeParquet(dataset, csv.getOriginalFilename());
+            List<List<String>> data = readParquet(parquetFile, 0, 100);
+
+            CsvParseResult result = CsvParseResult.success(graphs, data);
+            resultDB.finishJob(jobId, result);
+        } catch (IOException e) {
+            CsvParseResult result = CsvParseResult.error(e.getMessage());
+            resultDB.finishJob(jobId, result);
+        }
+        websocketHandler.sendComplete(jobId);
     }
 
     private List<List<String>> readParquet(File parquetFile, int page, int size) {
