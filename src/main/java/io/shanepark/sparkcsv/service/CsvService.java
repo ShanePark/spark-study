@@ -182,11 +182,11 @@ public class CsvService {
             StructType sectionSchema = new StructType().add("section", DataTypes.DoubleType);
             Dataset<Row> sectionDF = dataset.sparkSession().createDataFrame(sectionRows, sectionSchema);
 
-            Dataset<Row> resultDF = sectionDF.join(
-                            dataset.withColumn("section", functions.floor(functions.col(column).divide(interval)).multiply(interval).plus(roundedMin)),
-                            "section",
-                            "left_outer"
-                    )
+            Dataset<Row> binnedDataset = dataset
+                    .withColumn("offset", functions.col(column).minus(roundedMin))
+                    .withColumn("section", functions.floor(functions.col("offset").divide(interval)).multiply(interval).plus(roundedMin));
+
+            Dataset<Row> resultDF = sectionDF.join(binnedDataset, "section", "left_outer")
                     .groupBy("section")
                     .count();
 
@@ -195,8 +195,8 @@ public class CsvService {
                     .collect(Collectors.toMap(
                             row -> String.format("%.1f", row.getDouble(0)),
                             row -> row.getLong(1),
-                            (a, b) -> a, LinkedHashMap::new)
-                    );
+                            (a, b) -> a, LinkedHashMap::new
+                    ));
             return resultMap;
         }
 
