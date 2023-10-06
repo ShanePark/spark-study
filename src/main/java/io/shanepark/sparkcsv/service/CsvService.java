@@ -245,8 +245,12 @@ public class CsvService {
                 .limit(4)
                 .sort(functions.col("count").desc())
                 .collectAsList();
+
         return rows.stream()
-                .collect(LinkedHashMap::new, (m, r) -> m.put(r.get(0).toString(), r.getLong(1)), LinkedHashMap::putAll);
+                .collect(LinkedHashMap::new, (m, r) -> {
+                    Object key = r.get(0);
+                    m.put(key == null ? "" : key.toString(), r.getLong(1));
+                }, LinkedHashMap::putAll);
     }
 
     private HashMap<String, Long> makeCountMap(String column, Dataset<Row> dataset) {
@@ -257,8 +261,8 @@ public class CsvService {
                 .collectAsList()
                 .stream()
                 .collect(HashMap::new, (m, r) -> {
-                    Object o = r.get(0);
-                    m.put(o == null ? "" : o.toString(), r.getLong(1));
+                    Object key = r.get(0);
+                    m.put(key == null ? "" : key.toString(), r.getLong(1));
                 }, HashMap::putAll);
     }
 
