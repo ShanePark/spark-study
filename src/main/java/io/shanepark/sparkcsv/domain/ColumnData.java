@@ -10,12 +10,14 @@ public class ColumnData {
     public final long distinctCount;
     public final DataType dataType;
     public final GraphType graphType;
+    public final long rowSize;
     public Map<String, Long> graphData;
 
     public ColumnData(String columnName, long distinctCount, long rowSize, DataType dataType) {
         this.columnName = columnName;
         this.distinctCount = distinctCount;
         this.dataType = dataType;
+        this.rowSize = rowSize;
 
         graphType = determineGraphType(distinctCount, rowSize, dataType);
     }

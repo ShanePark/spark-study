@@ -50,7 +50,31 @@
 
       .chart.ALL_UNIQUE .inner-chart, .chart.ALL_SAME .inner-chart {
           margin-top: 20px;
-          height: 280px;
+          height: 180px;
+      }
+
+      .chart.TOP4 .inner-chart {
+          margin-top: 20px;
+          height: 180px;
+          padding: 10px;
+      }
+
+      .top4-row {
+          display: flex;
+          margin-bottom: 10px;
+      }
+
+      .top4-key {
+          width: 70%;
+          text-align: left;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+      }
+
+      .top4-value {
+          width: 30%;
+          text-align: right;
       }
 
       th {
@@ -65,6 +89,8 @@
           padding: 10px;
           overflow-x: clip;
           text-overflow: ellipsis;
+          max-width: 200px;
+          white-space: nowrap;
       }
 
       table {
@@ -100,8 +126,8 @@
 </body>
 <script>
 
-  const width = 300;
-  const height = 300;
+  const width = 200;
+  const height = 200;
 
   $('#csv').on('change', async function () {
     const file = $('#csv')[0].files[0]
@@ -200,6 +226,10 @@
       drawSingleText(chartDom, columnData, chartOption);
       return;
     }
+    if (chartOption === 'TOP4') {
+      drawTop4Chart(chartDom, columnData);
+      return;
+    }
     let myChart = echarts.init(chartDom, null, {
       width: width,
       height: height
@@ -214,9 +244,6 @@
         return pieChartOption(columnData);
       case 'COLUMN':
         return columnChartOption(columnData);
-        break;
-      case 'TOP4':
-        return top4ChartOption(columnData);
     }
   }
 
@@ -249,33 +276,6 @@
     };
   }
 
-  function top4ChartOption(columnData) {
-    let valueCountMap = columnData.graphData;
-    let data = Object.entries(valueCountMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(([key, value]) => ({name: key, value: value}));
-
-    let labels = data.map(item => item.name);
-    let values = data.map(item => item.value);
-
-    return {
-      tooltip: {
-        trigger: 'axis',
-      },
-      xAxis: {
-        type: 'category',
-        data: labels
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [{
-        type: 'bar',
-        data: values
-      }]
-    };
-  }
-
   function drawSingleText(chartDom, columnData, chartOption) {
     let text = '';
     let label = '';
@@ -292,6 +292,31 @@
 
     div.innerHTML = '<div><div class="value-label">' + label + '</div><div class="value-text">' + text + '</div>';
 
+
+    chartDom.append(div);
+  }
+
+  function drawTop4Chart(chartDom, columnData) {
+    let div = document.createElement('div');
+    div.style.width = width + 'px';
+    div.style.height = height + 'px';
+
+    const rowSize = columnData.rowSize;
+
+    const data = Object.entries(columnData.graphData)
+      .sort((a, b) => {
+        if (a[0] === "Other") return 1;
+        if (b[0] === "Other") return -1;
+        return b[1] - a[1];
+      }).map(([key, value]) => [key, value / rowSize * 100.0]);
+
+    for (let i = 0; i < data.length; i++) {
+      const [key, value] = data[i];
+      div.innerHTML +=
+        '<div class="top4-row">' +
+        '<div class="top4-key">' + key + '</div><div class="top4-value">' + value.toFixed(1) + '%</div>' +
+        '</div>';
+    }
 
     chartDom.append(div);
   }

@@ -152,7 +152,7 @@ public class CsvService {
             case ALL_UNIQUE:
                 return null;
             case TOP4:
-                return makeTop4Map(column, dataset);
+                return makeTop4Map(columnData, column, dataset);
             case COLUMN:
                 return makeColumnChart(columnData, column, dataset);
             default:
@@ -237,20 +237,25 @@ public class CsvService {
         return resultMap;
     }
 
-    private Map<String, Long> makeTop4Map(String column, Dataset<Row> dataset) {
+    private Map<String, Long> makeTop4Map(ColumnData columnData, String column, Dataset<Row> dataset) {
         List<Row> rows = dataset
                 .groupBy(column)
                 .count()
                 .orderBy(functions.col("count").desc())
-                .limit(4)
+                .filter(functions.col(column).isNotNull())
+                .limit(3)
                 .sort(functions.col("count").desc())
                 .collectAsList();
 
-        return rows.stream()
+        LinkedHashMap<String, Long> map = rows.stream()
                 .collect(LinkedHashMap::new, (m, r) -> {
                     Object key = r.get(0);
                     m.put(key == null ? "" : key.toString(), r.getLong(1));
                 }, LinkedHashMap::putAll);
+
+        long cntOther = columnData.rowSize - map.values().stream().mapToLong(Long::longValue).sum();
+        map.put("Other", cntOther);
+        return map;
     }
 
     private HashMap<String, Long> makeCountMap(String column, Dataset<Row> dataset) {
