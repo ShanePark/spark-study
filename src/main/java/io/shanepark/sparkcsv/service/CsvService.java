@@ -243,6 +243,7 @@ public class CsvService {
                 .count()
                 .orderBy(functions.col("count").desc())
                 .filter(functions.col(column).isNotNull())
+                .filter(functions.length(functions.trim(functions.col(column))).gt(0))
                 .limit(3)
                 .sort(functions.col("count").desc())
                 .collectAsList();
