@@ -266,10 +266,10 @@ public class CsvService {
                 .sort(functions.col(column).asc())
                 .collectAsList()
                 .stream()
-                .collect(HashMap::new, (m, r) -> {
+                .collect(LinkedHashMap::new, (m, r) -> {
                     Object key = r.get(0);
                     m.put(key == null ? "" : key.toString(), r.getLong(1));
-                }, HashMap::putAll);
+                }, LinkedHashMap::putAll);
     }
 
     private SparkSession getSparkSession() {
